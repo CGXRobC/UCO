@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UCO</title>
+</head>
+<body>
+  <canvas id="flutter-canvas"></canvas>
+  <script src="main.dart.js" type="application/javascript"></script>
+  <script>
+    window.addEventListener('load', function () {
+      let dpi = window.devicePixelRatio;
+      let width = screen.availWidth * dpi;
+      let height = screen.availHeight * dpi;
+      let canvas = document.getElementById('flutter-canvas');
+      if (canvas) {
+        canvas.width = width;
+        canvas.height = height;
+      } else {
+        console.error('Canvas element not found');
+      }
+    });
+  </script>
+</body>
+</html>
