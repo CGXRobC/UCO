@@ -39,13 +39,13 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else {
-        // Player login: verify name exists in the players subcollection under this course
-        final QuerySnapshot playerDoc = await _firestore
+        // Player login: find the player document in the course's players subcollection
+        final QuerySnapshot playerQuery = await _firestore
             .collection('courses/${widget.courseId}/players')
             .where('name', isEqualTo: input)
             .get();
 
-        if (playerDoc.docs.isEmpty) {
+        if (playerQuery.docs.isEmpty) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -58,13 +58,18 @@ class _LoginScreenState extends State<LoginScreen> {
           return;
         }
 
-        // Login success
+        // Get the document ID of the player
+        final playerDoc = playerQuery.docs.first;
+        final playerId = playerDoc.id;
+
+        // Navigate to Player Menu passing playerId
         if (mounted) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (_) => PlayerMenuScreen(
-                playerName: input,
+                playerId: playerId, // <-- NEW: pass document ID
+                playerName: input, // optional: show name in UI
                 courseId: widget.courseId,
               ),
             ),

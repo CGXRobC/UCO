@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'score_input_screen.dart';
 import 'leaderboard_screen.dart';
 import 'stats_screen.dart';
-import 'login_screen.dart'; // ✅ Needed for logout
+import 'login_screen.dart'; // Needed for logout
 
 class PlayerMenuScreen extends StatelessWidget {
   final String playerName;
+  final String playerId; // <-- NEW: store player document ID
   final String courseId;
 
   const PlayerMenuScreen({
     super.key,
     required this.playerName,
+    required this.playerId, // required
     required this.courseId,
   });
 
@@ -52,7 +54,8 @@ class PlayerMenuScreen extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (_) => ScoreInputScreen(
                     round: 1,
-                    playerName: playerName,
+                    playerId: playerId, // <-- pass playerId
+                    playerName: playerName, // optional
                     courseId: courseId,
                   ),
                 ),
@@ -77,6 +80,7 @@ class PlayerMenuScreen extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (_) => ScoreInputScreen(
                     round: 2,
+                    playerId: playerId,
                     playerName: playerName,
                     courseId: courseId,
                   ),
@@ -102,6 +106,7 @@ class PlayerMenuScreen extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (_) => ScoreInputScreen(
                     round: 3,
+                    playerId: playerId,
                     playerName: playerName,
                     courseId: courseId,
                   ),
