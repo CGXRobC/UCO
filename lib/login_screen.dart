@@ -4,7 +4,8 @@ import 'admin_menu_screen.dart';
 import 'player_menu_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final String courseId; // <-- required
+  const LoginScreen({super.key, required this.courseId});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -29,29 +30,21 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       if (input == _adminCode) {
         // Admin login
-        await _firestore.collection('settings').doc('group').set({
-          'code': 'UCO2025',
-          'timestamp': Timestamp.now(),
-        });
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const AdminMenuScreen()),
+            MaterialPageRoute(
+              builder: (_) => AdminMenuScreen(courseId: widget.courseId),
+            ),
           );
         }
       } else {
-        // Player login: verify name exists in players collection
+        // Player login: verify name exists in the players subcollection under this course
         final QuerySnapshot playerDoc = await _firestore
-            .collection('players')
+            .collection('courses/${widget.courseId}/players')
             .where('name', isEqualTo: input)
-            .where(
-              'groupCode',
-              isEqualTo: (await _firestore
-                  .collection('settings')
-                  .doc('group')
-                  .get())['code'],
-            )
             .get();
+
         if (playerDoc.docs.isEmpty) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -64,11 +57,16 @@ class _LoginScreenState extends State<LoginScreen> {
           }
           return;
         }
+
+        // Login success
         if (mounted) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => PlayerMenuScreen(playerName: input),
+              builder: (_) => PlayerMenuScreen(
+                playerName: input,
+                courseId: widget.courseId,
+              ),
             ),
           );
         }

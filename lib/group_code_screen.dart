@@ -29,18 +29,22 @@ class _GroupCodeScreenState extends State<GroupCodeScreen> {
     }
 
     try {
+      // Save group code in Firestore
       await _firestore.collection('settings').doc('group').set({
         'code': code,
         'timestamp': Timestamp.now(),
       });
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Group code set successfully')),
         );
+
         // Navigate based on admin code
         final nextScreen = code == _adminCode
-            ? const CourseSetupScreen()
-            : const PlayerSetupScreen();
+            ? CourseSetupScreen(courseId: code)
+            : PlayerSetupScreen(courseId: code);
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => nextScreen),

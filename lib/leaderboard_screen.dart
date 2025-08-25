@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LeaderboardScreen extends StatefulWidget {
-  final String courseId;
+  final String courseId; // NEW
+  final int? round; // optional, show all rounds if null
 
-  const LeaderboardScreen({super.key, required this.courseId});
+  const LeaderboardScreen({super.key, required this.courseId, this.round});
 
   @override
   State<LeaderboardScreen> createState() => _LeaderboardScreenState();
@@ -12,87 +13,79 @@ class LeaderboardScreen extends StatefulWidget {
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  late CollectionReference scoresCollection;
-  late CollectionReference playersCollection;
 
-  @override
-  void initState() {
-    super.initState();
-    final courseDoc = _firestore
-        .collection('course_settings')
-        .doc(widget.courseId);
-    scoresCollection = courseDoc.collection('scores');
-    playersCollection = courseDoc.collection('players');
-  }
-
-  Stream<List<Map<String, dynamic>>> _leaderboardStream() async* {
-    await for (var scoresSnapshot in scoresCollection.snapshots()) {
-      final playersSnapshot = await playersCollection.get();
-
-      Map<String, String> playerNames = {};
-      for (var p in playersSnapshot.docs) {
-        playerNames[p.id] = p['name'] ?? 'Unknown';
-      }
-
-      Map<String, int> totalPoints = {};
-      Map<String, int> lastHole = {};
-
-      for (var s in scoresSnapshot.docs) {
-        final playerId = s['player'] as String;
-        final points = s['points'] as int;
-        final hole = s['hole'] as int;
-
-        totalPoints[playerId] = (totalPoints[playerId] ?? 0) + points;
-        if (lastHole[playerId] == null || hole > lastHole[playerId]!) {
-          lastHole[playerId] = hole;
-        }
-      }
-
-      List<Map<String, dynamic>> leaderboard = [];
-      totalPoints.forEach((playerId, points) {
-        leaderboard.add({
-          'playerId': playerId,
-          'name': playerNames[playerId] ?? playerId,
-          'points': points,
-          'hole': lastHole[playerId] ?? 0,
-        });
-      });
-
-      leaderboard.sort((a, b) => b['points'].compareTo(a['points']));
-      yield leaderboard;
+  Stream<QuerySnapshot> _scoreStream() {
+    final collection = _firestore.collection(
+      'courses/${widget.courseId}/scores',
+    );
+    if (widget.round != null) {
+      return collection.where('round', isEqualTo: widget.round).snapshots();
     }
+    return collection.snapshots();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Leaderboard')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: StreamBuilder<List<Map<String, dynamic>>>(
-          stream: _leaderboardStream(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData)
-              return const Center(child: CircularProgressIndicator());
-            final leaderboard = snapshot.data!;
+      body: StreamBuilder<QuerySnapshot>(
+        stream: _scoreStream(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return const CircularProgressIndicator();
 
-            if (leaderboard.isEmpty)
-              return const Center(child: Text('No scores submitted yet.'));
+          final scores = snapshot.data!.docs;
 
-            return ListView.builder(
-              itemCount: leaderboard.length,
-              itemBuilder: (context, index) {
-                final player = leaderboard[index];
-                return ListTile(
-                  leading: Text('${index + 1}'),
-                  title: Text(player['name']),
-                  subtitle: Text('Hole: ${player['hole']}'),
-                  trailing: Text('${player['points']} pts'),
-                );
-              },
+          // Map playerId -> total points & current hole
+          final Map<String, Map<String, dynamic>> leaderboard = {};
+
+          for (var s in scores) {
+            final playerId = s['playerId'];
+            final hole = s['holeNumber'];
+            final points = s['points'];
+
+            if (!leaderboard.containsKey(playerId)) {
+              leaderboard[playerId] = {'points': 0, 'hole': 0};
+            }
+            leaderboard[playerId]!['points'] += points;
+            if (hole > (leaderboard[playerId]!['hole'] as int)) {
+              leaderboard[playerId]!['hole'] = hole;
+            }
+          }
+
+          // Convert to a list and sort by points descending
+          final sortedPlayers = leaderboard.entries.toList()
+            ..sort(
+              (a, b) => (b.value['points'] as int).compareTo(
+                a.value['points'] as int,
+              ),
             );
-          },
-        ),
+
+          return ListView.builder(
+            itemCount: sortedPlayers.length,
+            itemBuilder: (context, index) {
+              final playerId = sortedPlayers[index].key;
+              final totalPoints = sortedPlayers[index].value['points'];
+              final currentHole = sortedPlayers[index].value['hole'];
+
+              return FutureBuilder<DocumentSnapshot>(
+                future: _firestore
+                    .collection('courses/${widget.courseId}/players')
+                    .doc(playerId)
+                    .get(),
+                builder: (context, playerSnap) {
+                  if (!playerSnap.hasData) return const SizedBox();
+                  final playerName = playerSnap.data!['name'];
+                  return ListTile(
+                    leading: Text('${index + 1}'),
+                    title: Text(playerName),
+                    subtitle: Text('Hole: $currentHole'),
+                    trailing: Text('Points: $totalPoints'),
+                  );
+                },
+              );
+            },
+          );
+        },
       ),
     );
   }

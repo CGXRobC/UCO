@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ScoreInputScreen extends StatefulWidget {
+  final String courseId;
+  final String playerName; // if empty, admin will select
   final int round;
-  final String? playerName;
-  final String courseId; // New required courseId parameter
 
   const ScoreInputScreen({
     super.key,
-    required this.round,
-    this.playerName,
     required this.courseId,
+    required this.playerName,
+    required this.round,
   });
 
   @override
@@ -19,212 +19,174 @@ class ScoreInputScreen extends StatefulWidget {
 
 class _ScoreInputScreenState extends State<ScoreInputScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  int _hole = 1;
-  int _score = 0;
-  String? _selectedPlayerId;
-  double? _selectedHandicap;
-  final TextEditingController _scoreController = TextEditingController();
-  String? _groupCode;
+  final Map<int, TextEditingController> _scoreControllers = {};
+  final int totalHoles = 18;
+  String? selectedPlayer; // For admin dropdown
+  List<String> players = [];
 
-  late CollectionReference playersCollection;
-  late CollectionReference holesCollection;
-  late CollectionReference scoresCollection;
-  late DocumentReference courseDocRef;
+  bool get isAdmin => widget.playerName.isEmpty;
 
   @override
   void initState() {
     super.initState();
-
-    // References using courseId
-    courseDocRef = _firestore
-        .collection('course_settings')
-        .doc(widget.courseId);
-    playersCollection = courseDocRef.collection('players');
-    holesCollection = courseDocRef.collection('holes');
-    scoresCollection = courseDocRef.collection('scores');
-
-    _fetchPlayers();
-    _fetchGroupCode();
-    if (widget.playerName != null) {
-      _fetchPlayerIdFromName(widget.playerName!);
+    for (int i = 1; i <= totalHoles; i++) {
+      _scoreControllers[i] = TextEditingController();
+    }
+    if (isAdmin) {
+      _fetchPlayers();
+    } else {
+      selectedPlayer = widget.playerName;
     }
   }
 
   Future<void> _fetchPlayers() async {
-    final querySnapshot = await playersCollection.get();
-    if (querySnapshot.docs.isNotEmpty &&
-        _selectedPlayerId == null &&
-        widget.playerName == null) {
-      setState(() {
-        _selectedPlayerId =
-            querySnapshot.docs.first.id; // default select first player
-        _fetchPlayerHandicap();
-      });
-    }
-  }
-
-  Future<void> _fetchPlayerIdFromName(String name) async {
-    final querySnapshot = await playersCollection
-        .where('name', isEqualTo: name)
-        .limit(1)
+    final snapshot = await _firestore
+        .collection('courses/${widget.courseId}/players')
         .get();
-    if (querySnapshot.docs.isNotEmpty) {
-      setState(() {
-        _selectedPlayerId = querySnapshot.docs.first.id;
-        _fetchPlayerHandicap();
-      });
-    }
+    setState(() {
+      players = snapshot.docs.map((doc) => doc['name'] as String).toList();
+      if (players.isNotEmpty) selectedPlayer = players.first;
+    });
   }
 
-  Future<void> _fetchPlayerHandicap() async {
-    if (_selectedPlayerId != null) {
-      final doc = await playersCollection.doc(_selectedPlayerId).get();
-      if (doc.exists) {
-        setState(() {
-          _selectedHandicap = doc['handicap']?.toDouble() ?? 24.0;
+  @override
+  void dispose() {
+    for (var controller in _scoreControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _saveScores() async {
+    try {
+      // Determine which player we're saving for
+      final scorePlayerName = isAdmin ? selectedPlayer : widget.playerName;
+
+      if (scorePlayerName == null || scorePlayerName.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Please select a player to save scores."),
+          ),
+        );
+        return;
+      }
+
+      final courseScoresRef = _firestore.collection(
+        'courses/${widget.courseId}/scores',
+      );
+      final batch = _firestore.batch();
+
+      for (int holeNumber = 1; holeNumber <= totalHoles; holeNumber++) {
+        final input = _scoreControllers[holeNumber]!.text.trim();
+        final score = int.tryParse(input);
+        if (score == null) continue;
+
+        // Optional: fetch hole info for points calculation
+        final holeSnapshot = await _firestore
+            .doc('courses/${widget.courseId}/holes/hole_$holeNumber')
+            .get();
+        if (!holeSnapshot.exists) continue;
+
+        final par = holeSnapshot['par'] as int;
+        final handicap = holeSnapshot['handicap'] as int;
+
+        final points = _calculateStablefordPoints(score, par, handicap);
+
+        // Create a new document reference in scores
+        final docRef = courseScoresRef.doc();
+        batch.set(docRef, {
+          'playerName': scorePlayerName,
+          'round': widget.round,
+          'hole': holeNumber,
+          'grossScore': score,
+          'points': points,
+          'timestamp': FieldValue.serverTimestamp(),
+          'groupCode': widget.courseId,
         });
       }
+
+      // Commit all writes at once
+      await batch.commit();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Scores saved successfully")),
+      );
+
+      // Clear input fields
+      for (var controller in _scoreControllers.values) {
+        controller.clear();
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error saving scores: $e")));
     }
   }
 
-  Future<int> _getParForHole(int hole) async {
-    final doc = await holesCollection.doc('hole_$hole').get();
-    return doc.exists ? doc['par'] as int : 4;
-  }
-
-  Future<int> _getStrokeIndexForHole(int hole) async {
-    final doc = await holesCollection.doc('hole_$hole').get();
-    return doc.exists ? doc['handicap'] as int : 1;
-  }
-
-  Future<void> _fetchGroupCode() async {
-    final snapshot = await courseDocRef.get();
-    setState(() {
-      _groupCode = snapshot.data()?['name'] ?? 'UCO2025';
-    });
-  }
-
-  Future<void> _submitScore() async {
-    if (_score < 1 || _score > 12 || _selectedPlayerId == null) return;
-
-    final par = await _getParForHole(_hole);
-    final strokeIndex = await _getStrokeIndexForHole(_hole);
-    final handicapIndex = _selectedHandicap ?? 24;
-    final courseDoc = await courseDocRef.get();
-    final slopeRating = courseDoc['slopeRating'] as int? ?? 127;
-    final courseRating = courseDoc['courseRating'] as double? ?? 70.9;
-
-    // Course handicap calculation
-    final courseHandicap = ((handicapIndex * slopeRating) / 113).round();
-    final strokes = courseHandicap / 18.0;
-    final netScore = _score - (strokes * strokeIndex).round();
-
-    int points = 0;
-    bool isBirdie = false;
-    if (netScore - par >= 2) {
-      points = 0; // Double bogey+
-    } else if (netScore - par == 1) {
-      points = 1; // Bogey
-    } else if (netScore - par == 0) {
-      points = 2; // Par
-    } else if (netScore - par == -1) {
-      points = 3; // Birdie
-      isBirdie = true;
-    } else if (netScore - par == -2) {
-      points = 4; // Eagle
-    } else if (netScore - par == -3) {
-      points = 5; // Albatross
-    }
-
-    await scoresCollection.add({
-      'player': _selectedPlayerId,
-      'round': widget.round,
-      'hole': _hole,
-      'grossScore': _score,
-      'netScore': netScore,
-      'points': points,
-      'isBirdie': isBirdie,
-      'timestamp': Timestamp.now(),
-      'courseName': courseDoc['name'],
-      'courseRating': courseRating,
-      'slopeRating': slopeRating,
-    });
-
-    setState(() {
-      _scoreController.clear();
-      _score = 0;
-      _hole = _hole < 18 ? _hole + 1 : 1;
-    });
+  int _calculateStablefordPoints(int score, int par, int handicap) {
+    int diff = par - score;
+    if (diff >= 2) return 5;
+    if (diff == 1) return 4;
+    if (diff == 0) return 2;
+    if (diff == -1) return 1;
+    return 0;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Round ${widget.round} Scores')),
+      appBar: AppBar(
+        title: Text(
+          isAdmin
+              ? 'Admin - Round ${widget.round}'
+              : '${widget.playerName} - Round ${widget.round}',
+        ),
+      ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            if (widget.playerName == null)
-              StreamBuilder<QuerySnapshot>(
-                stream: playersCollection.snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData)
-                    return const CircularProgressIndicator();
-
-                  final items = snapshot.data!.docs
-                      .map(
-                        (doc) => DropdownMenuItem(
-                          value: doc.id,
-                          child: Text(doc['name']),
-                        ),
-                      )
-                      .toList();
-
-                  return DropdownButton<String>(
-                    value: _selectedPlayerId,
-                    hint: const Text('Select Player'),
-                    items: items,
-                    onChanged: (val) {
-                      setState(() {
-                        _selectedPlayerId = val;
-                        _fetchPlayerHandicap();
-                      });
-                    },
-                  );
-                },
-              )
-            else
-              Text('Player: ${widget.playerName}'),
-
-            const SizedBox(height: 16),
-            DropdownButton<int>(
-              value: _hole,
-              items: List.generate(
-                18,
-                (i) => DropdownMenuItem(
-                  value: i + 1,
-                  child: Text('Hole ${i + 1}'),
+            if (isAdmin)
+              DropdownButtonFormField<String>(
+                value: selectedPlayer,
+                items: players
+                    .map(
+                      (name) =>
+                          DropdownMenuItem(value: name, child: Text(name)),
+                    )
+                    .toList(),
+                onChanged: (val) => setState(() => selectedPlayer = val),
+                decoration: const InputDecoration(
+                  labelText: 'Select Player',
+                  border: OutlineInputBorder(),
                 ),
               ),
-              onChanged: (val) => setState(() => _hole = val!),
-            ),
-
             const SizedBox(height: 16),
-            TextField(
-              controller: _scoreController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Enter Gross Score (1-12)',
-                border: OutlineInputBorder(),
+            Expanded(
+              child: ListView.builder(
+                itemCount: totalHoles,
+                itemBuilder: (context, index) {
+                  int holeNumber = index + 1;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: TextField(
+                      controller: _scoreControllers[holeNumber],
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Hole $holeNumber Score',
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                  );
+                },
               ),
-              onChanged: (val) => _score = int.tryParse(val) ?? 0,
             ),
-
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _submitScore,
-              child: const Text('Submit Score'),
+              onPressed: _saveScores,
+              child: const Text('Save Scores', style: TextStyle(fontSize: 16)),
             ),
           ],
         ),

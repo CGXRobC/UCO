@@ -20,6 +20,7 @@ void main() async {
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
   );
+
   runApp(const UCOApp());
 }
 
@@ -28,9 +29,12 @@ class UCOApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Provide a default courseId here
+    const String defaultCourseId = "default_course";
+
     return MaterialApp(
       theme: ThemeData(primarySwatch: Colors.green),
-      home: const LoginScreen(),
+      home: const LoginScreen(courseId: defaultCourseId), // <-- pass courseId
     );
   }
 }

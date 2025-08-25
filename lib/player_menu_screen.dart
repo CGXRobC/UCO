@@ -2,19 +2,44 @@ import 'package:flutter/material.dart';
 import 'score_input_screen.dart';
 import 'leaderboard_screen.dart';
 import 'stats_screen.dart';
+import 'login_screen.dart'; // ✅ Needed for logout
 
 class PlayerMenuScreen extends StatelessWidget {
   final String playerName;
-  const PlayerMenuScreen({super.key, required this.playerName});
+  final String courseId;
+
+  const PlayerMenuScreen({
+    super.key,
+    required this.playerName,
+    required this.courseId,
+  });
+
+  void _logout(BuildContext context) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => LoginScreen(courseId: courseId)),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Player Menu - $playerName')),
+      appBar: AppBar(
+        title: Text('Player Menu - $playerName'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: "Logout",
+            onPressed: () => _logout(context),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            // Round 1
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
@@ -25,8 +50,11 @@ class PlayerMenuScreen extends StatelessWidget {
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                      ScoreInputScreen(round: 1, playerName: playerName),
+                  builder: (_) => ScoreInputScreen(
+                    round: 1,
+                    playerName: playerName,
+                    courseId: courseId,
+                  ),
                 ),
               ),
               child: const Text(
@@ -35,6 +63,8 @@ class PlayerMenuScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
+
+            // Round 2
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
@@ -45,8 +75,11 @@ class PlayerMenuScreen extends StatelessWidget {
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                      ScoreInputScreen(round: 2, playerName: playerName),
+                  builder: (_) => ScoreInputScreen(
+                    round: 2,
+                    playerName: playerName,
+                    courseId: courseId,
+                  ),
                 ),
               ),
               child: const Text(
@@ -55,6 +88,8 @@ class PlayerMenuScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
+
+            // Round 3
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
@@ -65,8 +100,11 @@ class PlayerMenuScreen extends StatelessWidget {
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                      ScoreInputScreen(round: 3, playerName: playerName),
+                  builder: (_) => ScoreInputScreen(
+                    round: 3,
+                    playerName: playerName,
+                    courseId: courseId,
+                  ),
                 ),
               ),
               child: const Text(
@@ -75,6 +113,8 @@ class PlayerMenuScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
+
+            // Leaderboard
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
@@ -84,7 +124,9 @@ class PlayerMenuScreen extends StatelessWidget {
               ),
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
+                MaterialPageRoute(
+                  builder: (_) => LeaderboardScreen(courseId: courseId),
+                ),
               ),
               child: const Text(
                 '4. View Leaderboard',
@@ -92,6 +134,8 @@ class PlayerMenuScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
+
+            // Stats
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
@@ -101,12 +145,32 @@ class PlayerMenuScreen extends StatelessWidget {
               ),
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const StatsScreen()),
+                MaterialPageRoute(
+                  builder: (_) => StatsScreen(courseId: courseId),
+                ),
               ),
               child: const Text(
                 '5. View Stats',
                 style: TextStyle(fontSize: 16),
               ),
+            ),
+            const Spacer(),
+
+            // Logout button at bottom
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
+              ),
+              icon: const Icon(Icons.logout, color: Colors.white),
+              label: const Text(
+                "Logout",
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+              onPressed: () => _logout(context),
             ),
           ],
         ),
