@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart'; // Add this
 import 'admin_menu_screen.dart';
 import 'player_menu_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  final String courseId; // <-- required
+  final String courseId;
   const LoginScreen({super.key, required this.courseId});
 
   @override
@@ -29,7 +30,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       if (input == _adminCode) {
-        // Admin login
         if (mounted) {
           Navigator.pushReplacement(
             context,
@@ -39,7 +39,6 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else {
-        // Player login: find the player document in the course's players subcollection
         final QuerySnapshot playerQuery = await _firestore
             .collection('courses/${widget.courseId}/players')
             .where('name', isEqualTo: input)
@@ -58,18 +57,16 @@ class _LoginScreenState extends State<LoginScreen> {
           return;
         }
 
-        // Get the document ID of the player
         final playerDoc = playerQuery.docs.first;
         final playerId = playerDoc.id;
 
-        // Navigate to Player Menu passing playerId
         if (mounted) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (_) => PlayerMenuScreen(
-                playerId: playerId, // <-- NEW: pass document ID
-                playerName: input, // optional: show name in UI
+                playerId: playerId,
+                playerName: input,
                 courseId: widget.courseId,
               ),
             ),
@@ -88,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Unofficial Cornish Open Login')),
+      appBar: AppBar(title: const Text('Login')), // Simplified
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -96,9 +93,12 @@ class _LoginScreenState extends State<LoginScreen> {
             TextField(
               controller: _codeController,
               decoration: const InputDecoration(
-                labelText: 'Enter Admin Code (ADMIN2025) or Player Name',
+                labelText: 'Enter Code or Name',
                 border: OutlineInputBorder(),
               ),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
+              ], // Restrict input
             ),
             const SizedBox(height: 16),
             ElevatedButton(

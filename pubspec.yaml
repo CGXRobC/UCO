@@ -6,18 +6,28 @@ version: 1.0.0+1
 environment:
   sdk: ^3.8.1
 
-
 dependencies:
   flutter:
     sdk: flutter
   firebase_core: ^3.5.0
   cloud_firestore: ^5.4.3
+  google_fonts: ^6.2.1
+  font_awesome_flutter: ^10.7.0
 
+flutter:
+    uses-material-design: true
+    assets:
+    - web/assets/U_C_O_logo.png
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^5.0.0
 
-
+  # Remove manual font assets to avoid conflict with google_fonts
+  # fonts:
+  #   - family: NotoSans
+  #     fonts:
+  #       - asset: assets/fonts/static/NotoSans-Regular.ttf
+  #       - asset: assets/fonts/static/NotoSans-Bold.ttf
+  #         weight: 700

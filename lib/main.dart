@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'login_screen.dart';
 
 void main() async {
@@ -29,12 +30,14 @@ class UCOApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Provide a default courseId here
     const String defaultCourseId = "default_course";
 
     return MaterialApp(
-      theme: ThemeData(primarySwatch: Colors.green),
-      home: const LoginScreen(courseId: defaultCourseId), // <-- pass courseId
+      theme: ThemeData(
+        primarySwatch: Colors.green,
+        textTheme: GoogleFonts.notoSansTextTheme(Theme.of(context).textTheme),
+      ),
+      home: const LoginScreen(courseId: defaultCourseId),
     );
   }
 }

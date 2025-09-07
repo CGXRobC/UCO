@@ -4,10 +4,11 @@ import 'player_setup_screen.dart';
 import 'score_input_screen.dart';
 import 'leaderboard_screen.dart';
 import 'stats_screen.dart';
-import 'login_screen.dart'; // ✅ Import login screen
+import 'login_screen.dart';
+import 'edit_scores_screen.dart'; // New import
 
 class AdminMenuScreen extends StatelessWidget {
-  final String courseId; // Required
+  final String courseId;
   const AdminMenuScreen({super.key, required this.courseId});
 
   void _logout(BuildContext context) {
@@ -36,179 +37,245 @@ class AdminMenuScreen extends StatelessWidget {
         child: Column(
           children: [
             // 1. Set Course Up
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                  ),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CourseSetupScreen(courseId: courseId),
+                    ),
+                  ),
+                  child: const Text(
+                    '1. Set Course Up',
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
-              ),
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => CourseSetupScreen(courseId: courseId),
-                ),
-              ),
-              child: const Text(
-                '1. Set Course Up',
-                style: TextStyle(fontSize: 16),
               ),
             ),
             const SizedBox(height: 16),
 
             // 2. Set Players Up
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                  ),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PlayerSetupScreen(courseId: courseId),
+                    ),
+                  ),
+                  child: const Text(
+                    '2. Set Players Up',
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
-              ),
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => PlayerSetupScreen(courseId: courseId),
-                ),
-              ),
-              child: const Text(
-                '2. Set Players Up',
-                style: TextStyle(fontSize: 16),
               ),
             ),
             const SizedBox(height: 16),
 
             // 3. Add Round 1 Scores
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
-                ),
-              ),
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ScoreInputScreen(
-                    courseId: courseId,
-                    round: 1,
-                    playerName: '', // Admin selects player inside the screen
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                  ),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ScoreInputScreen(
+                        courseId: courseId,
+                        round: 1,
+                        playerName: '',
+                      ),
+                    ),
+                  ),
+                  child: const Text(
+                    '3. Add Round 1 Scores',
+                    style: TextStyle(fontSize: 16),
                   ),
                 ),
-              ),
-              child: const Text(
-                '3. Add Round 1 Scores',
-                style: TextStyle(fontSize: 16),
               ),
             ),
             const SizedBox(height: 16),
 
             // 4. Add Round 2 Scores
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
-                ),
-              ),
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ScoreInputScreen(
-                    courseId: courseId,
-                    round: 2,
-                    playerName: '',
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                  ),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ScoreInputScreen(
+                        courseId: courseId,
+                        round: 2,
+                        playerName: '',
+                      ),
+                    ),
+                  ),
+                  child: const Text(
+                    '4. Add Round 2 Scores',
+                    style: TextStyle(fontSize: 16),
                   ),
                 ),
-              ),
-              child: const Text(
-                '4. Add Round 2 Scores',
-                style: TextStyle(fontSize: 16),
               ),
             ),
             const SizedBox(height: 16),
 
             // 5. Add Round 3 Scores
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
-                ),
-              ),
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ScoreInputScreen(
-                    courseId: courseId,
-                    round: 3,
-                    playerName: '',
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                  ),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ScoreInputScreen(
+                        courseId: courseId,
+                        round: 3,
+                        playerName: '',
+                      ),
+                    ),
+                  ),
+                  child: const Text(
+                    '5. Add Round 3 Scores',
+                    style: TextStyle(fontSize: 16),
                   ),
                 ),
               ),
-              child: const Text(
-                '5. Add Round 3 Scores',
-                style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+
+            // 6. Edit Player Scores (New)
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                  ),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => EditScoresScreen(courseId: courseId),
+                    ),
+                  ),
+                  child: const Text(
+                    '6. Edit Player Scores',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 16),
 
-            // 6. View Leaderboard
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
+            // 7. View Leaderboard
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                  ),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => LeaderboardScreen(courseId: courseId),
+                    ),
+                  ),
+                  child: const Text(
+                    '7. View Leaderboard',
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
-              ),
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => LeaderboardScreen(courseId: courseId),
-                ),
-              ),
-              child: const Text(
-                '6. View Leaderboard',
-                style: TextStyle(fontSize: 16),
               ),
             ),
             const SizedBox(height: 16),
 
-            // 7. View Stats
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
+            // 8. View Stats
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                  ),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => StatsScreen(courseId: courseId),
+                    ),
+                  ),
+                  child: const Text(
+                    '8. View Stats',
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
-              ),
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => StatsScreen(courseId: courseId),
-                ),
-              ),
-              child: const Text(
-                '7. View Stats',
-                style: TextStyle(fontSize: 16),
               ),
             ),
             const Spacer(),
 
-            // ✅ Logout button at bottom
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
+            // Logout button
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                  ),
+                  icon: const Icon(Icons.logout, color: Colors.white),
+                  label: const Text(
+                    "Logout",
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                  onPressed: () => _logout(context),
                 ),
               ),
-              icon: const Icon(Icons.logout, color: Colors.white),
-              label: const Text(
-                "Logout",
-                style: TextStyle(color: Colors.white, fontSize: 16),
-              ),
-              onPressed: () => _logout(context),
             ),
           ],
         ),

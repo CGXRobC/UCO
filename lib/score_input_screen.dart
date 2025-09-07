@@ -40,10 +40,10 @@ class _ScoreInputScreenState extends State<ScoreInputScreen> {
   void initState() {
     super.initState();
     for (int i = 1; i <= totalHoles; i++) {
-      _scoreControllers[i] = TextEditingController()
-        ..addListener(() => _updatePoints(i));
+      _scoreControllers[i] = TextEditingController();
       _focusNodes[i] = FocusNode()..addListener(() => _handleFocusChange(i));
       _isEditable[i] = true; // Initialize as editable
+      _scoreControllers[i]!.addListener(() => _updatePoints(i)); // Add listener
     }
     _fetchHoleData();
     if (isAdmin) {
@@ -96,7 +96,6 @@ class _ScoreInputScreenState extends State<ScoreInputScreen> {
         });
       }
 
-      // Load existing scores
       final scoresSnapshot = await _firestore
           .collection('courses/${widget.courseId}/scores')
           .where('playerId', isEqualTo: selectedPlayerId)
@@ -106,9 +105,25 @@ class _ScoreInputScreenState extends State<ScoreInputScreen> {
       for (var doc in scoresSnapshot.docs) {
         final hole = doc['hole'] as int;
         final grossScore = doc['grossScore'] as int;
+        final points = doc['points'] as int;
         _scoreControllers[hole]!.text = grossScore.toString();
-        _isEditable[hole] = false; // Mark as non-editable
-        _updatePoints(hole);
+        _pointsDisplay[hole] = points
+            .toString(); // Initial points from Firestore
+        _isEditable[hole] = false;
+        print(
+          'Fetched score for hole $hole: gross=$grossScore, points=$points',
+        );
+      }
+
+      // Recalculate points for all fetched scores
+      for (var doc in scoresSnapshot.docs) {
+        final hole = doc['hole'] as int;
+        _pointsDisplay[hole] = _calculateStablefordPoints(
+          int.tryParse(_scoreControllers[hole]!.text) ?? 0,
+          holeData[hole]!['par']!,
+          holeData[hole]!['strokeIndex']!,
+          playerHandicap!,
+        ).toString();
       }
 
       setState(() {
@@ -145,6 +160,21 @@ class _ScoreInputScreenState extends State<ScoreInputScreen> {
     setState(() {}); // Refresh if needed
   }
 
+  int _calculateStablefordPoints(
+    int grossScore,
+    int par,
+    int strokeIndex,
+    int playerHandicap,
+  ) {
+    int strokes = playerHandicap ~/ 18;
+    if (strokeIndex <= (playerHandicap % 18)) {
+      strokes++;
+    }
+    int netScore = grossScore - strokes;
+    int diff = par - netScore;
+    return max(0, 2 + diff);
+  }
+
   void _updatePoints(int holeNumber) {
     final input = _scoreControllers[holeNumber]!.text.trim();
     final score = int.tryParse(input);
@@ -156,18 +186,17 @@ class _ScoreInputScreenState extends State<ScoreInputScreen> {
       });
       return;
     }
-
-    final par = holeData[holeNumber]!['par']!;
-    final strokeIndex = holeData[holeNumber]!['strokeIndex']!;
     final points = _calculateStablefordPoints(
       score,
-      par,
-      strokeIndex,
+      holeData[holeNumber]!['par']!,
+      holeData[holeNumber]!['strokeIndex']!,
       playerHandicap!,
     );
-
     setState(() {
-      _pointsDisplay[holeNumber] = '$points pts';
+      _pointsDisplay[holeNumber] = '$points';
+      print(
+        'Updated points for hole $holeNumber: score=$score, points=$points',
+      );
     });
   }
 
@@ -199,7 +228,6 @@ class _ScoreInputScreenState extends State<ScoreInputScreen> {
         playerHandicap!,
       );
 
-      // Use a fixed doc ID to update or create
       final docId = '${playerId}_round${widget.round}_hole$holeNumber';
       final docRef = _firestore
           .collection('courses/${widget.courseId}/scores')
@@ -215,7 +243,6 @@ class _ScoreInputScreenState extends State<ScoreInputScreen> {
         'timestamp': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      // Mark as non-editable after successful save
       setState(() {
         _isEditable[holeNumber] = false;
       });
@@ -237,7 +264,6 @@ class _ScoreInputScreenState extends State<ScoreInputScreen> {
   Future<void> _saveAllScores() async {
     for (int holeNumber = 1; holeNumber <= totalHoles; holeNumber++) {
       if (_isEditable[holeNumber] ?? true) {
-        // Use ?? true for null-safety
         await _saveSingleHole(holeNumber);
       }
     }
@@ -254,28 +280,6 @@ class _ScoreInputScreenState extends State<ScoreInputScreen> {
     super.dispose();
   }
 
-  int _calculateStablefordPoints(
-    int grossScore,
-    int par,
-    int strokeIndex,
-    int playerHandicap,
-  ) {
-    // Calculate strokes allocated to this hole based on player's handicap and hole's stroke index
-    int strokes = playerHandicap ~/ 18;
-    if (strokeIndex <= (playerHandicap % 18)) {
-      strokes++;
-    }
-
-    // Calculate net score
-    int netScore = grossScore - strokes;
-
-    // Calculate difference from par
-    int diff = par - netScore;
-
-    // Standard Stableford points: max(0, 2 + diff)
-    return max(0, 2 + diff);
-  }
-
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -288,10 +292,11 @@ class _ScoreInputScreenState extends State<ScoreInputScreen> {
           isAdmin
               ? 'Admin - Round ${widget.round}'
               : '${widget.playerName} - Round ${widget.round}',
+          style: const TextStyle(fontSize: 18),
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         child: Column(
           children: [
             if (isAdmin)
@@ -301,7 +306,10 @@ class _ScoreInputScreenState extends State<ScoreInputScreen> {
                     .map(
                       (p) => DropdownMenuItem(
                         value: p['id'],
-                        child: Text(p['name']!),
+                        child: Text(
+                          p['name']!,
+                          style: const TextStyle(fontSize: 14),
+                        ),
                       ),
                     )
                     .toList(),
@@ -312,7 +320,6 @@ class _ScoreInputScreenState extends State<ScoreInputScreen> {
                       (p) => p['id'] == val,
                     )['name'];
                     isLoading = true;
-                    // Reset editability and controllers
                     for (int i = 1; i <= totalHoles; i++) {
                       _scoreControllers[i]!.clear();
                       _pointsDisplay[i] = '';
@@ -324,50 +331,209 @@ class _ScoreInputScreenState extends State<ScoreInputScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Select Player',
                   border: OutlineInputBorder(),
+                  labelStyle: TextStyle(fontSize: 14),
                 ),
               ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.yellow[100],
+                      border: Border.all(color: Colors.grey, width: 1),
+                    ),
+                    child: const Text(
+                      'Hole',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      border: Border.all(color: Colors.grey, width: 1),
+                    ),
+                    child: const Text(
+                      'Par',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      border: Border.all(color: Colors.grey, width: 1),
+                    ),
+                    child: const Text(
+                      'S.I.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 70,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey, width: 1),
+                    ),
+                    child: const Text(
+                      'Score',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.green[50],
+                      border: Border.all(color: Colors.grey, width: 1),
+                    ),
+                    child: const Text(
+                      'Pts',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Expanded(
               child: ListView.builder(
                 itemCount: totalHoles,
                 itemBuilder: (context, index) {
                   int holeNumber = index + 1;
+                  final par = holeData[holeNumber]?['par']?.toString() ?? '-';
+                  final strokeIndex =
+                      holeData[holeNumber]?['strokeIndex']?.toString() ?? '-';
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4.0),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Expanded(
+                        Container(
+                          width: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.yellow[100],
+                            border: Border.all(color: Colors.grey, width: 1),
+                          ),
+                          child: Text(
+                            '$holeNumber',
+                            style: const TextStyle(fontSize: 12),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            border: Border.all(color: Colors.grey, width: 1),
+                          ),
+                          child: Text(
+                            par,
+                            style: const TextStyle(fontSize: 12),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.blue[50],
+                            border: Border.all(color: Colors.grey, width: 1),
+                          ),
+                          child: Text(
+                            strokeIndex,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.red,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 70,
                           child: TextField(
                             controller: _scoreControllers[holeNumber],
                             focusNode: _focusNodes[holeNumber],
                             keyboardType: TextInputType.number,
-                            enabled:
-                                _isEditable[holeNumber] ??
-                                true, // Null-safety fix
+                            enabled: _isEditable[holeNumber] ?? true,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 14),
                             decoration: InputDecoration(
-                              labelText: 'Hole $holeNumber Score',
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 8,
+                                horizontal: 4,
+                              ),
                               border: const OutlineInputBorder(),
                               filled: !(_isEditable[holeNumber] ?? true),
                               fillColor: !(_isEditable[holeNumber] ?? true)
                                   ? Colors.grey[200]
                                   : null,
                             ),
+                            onChanged: (value) {
+                              final grossScore = int.tryParse(value) ?? 0;
+                              _updatePoints(
+                                holeNumber,
+                              ); // Recalculate on change
+                            },
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Text(_pointsDisplay[holeNumber] ?? ''),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.green[50],
+                            border: Border.all(color: Colors.grey, width: 1),
+                          ),
+                          child: Text(
+                            _pointsDisplay[holeNumber] ?? '',
+                            style: const TextStyle(fontSize: 12),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                       ],
                     ),
                   );
                 },
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             ElevatedButton(
               onPressed: _saveAllScores,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+              ),
               child: const Text(
                 'Save All Scores',
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: 14),
               ),
             ),
           ],
