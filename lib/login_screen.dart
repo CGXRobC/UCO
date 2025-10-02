@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/services.dart'; // Add this
+import 'package:flutter/services.dart';
 import 'admin_menu_screen.dart';
 import 'player_menu_screen.dart';
 
@@ -85,33 +85,49 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')), // Simplified
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _codeController,
-              decoration: const InputDecoration(
-                labelText: 'Enter Code or Name',
-                border: OutlineInputBorder(),
-              ),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
-              ], // Restrict input
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
+      appBar: AppBar(title: const Text('Login')),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(
+              'web/Assets/images/U_C_O_Background.png',
+            ), // Path to your image
+            fit: BoxFit.cover, // Makes the image cover the entire background
+            opacity: 0.7, // Adjusts opacity for readability
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              TextField(
+                controller: _codeController,
+                decoration: const InputDecoration(
+                  labelText: 'Enter Code or Name',
+                  border: OutlineInputBorder(),
+                  filled: true, // Add background to TextField
+                  fillColor:
+                      Colors.white70, // Semi-transparent white background
                 ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
+                ],
               ),
-              onPressed: _login,
-              child: const Text('Login', style: TextStyle(fontSize: 16)),
-            ),
-          ],
+              const SizedBox(height: 16),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                  backgroundColor:
+                      Colors.white70, // Semi-transparent white background
+                ),
+                onPressed: _login,
+                child: const Text('Login', style: TextStyle(fontSize: 16)),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'score_input_screen.dart';
 import 'leaderboard_screen.dart';
@@ -37,179 +39,195 @@ class PlayerMenuScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Round 1
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 300,
-                ), // Limit button width
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(
+              'web/Assets/images/U_C_O_Background.png',
+            ), // Path to your image
+            fit: BoxFit.cover, // Makes the image cover the entire background
+            opacity: 0.7, // Adjusts opacity for readability
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              // Round 1
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 300),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                      backgroundColor: Colors.white.withOpacity(
+                        0.8,
+                      ), // Semi-transparent button for contrast
                     ),
-                  ),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ScoreInputScreen(
-                        round: 1,
-                        playerId: playerId,
-                        playerName: playerName,
-                        courseId: courseId,
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ScoreInputScreen(
+                          round: 1,
+                          playerId: playerId,
+                          playerName: playerName,
+                          courseId: courseId,
+                        ),
                       ),
                     ),
-                  ),
-                  child: const Text(
-                    '1. Add Round 1 Scores',
-                    style: TextStyle(fontSize: 16),
+                    child: const Text(
+                      '1. Add Round 1 Scores',
+                      style: TextStyle(fontSize: 16),
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Round 2
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 300),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
+              // Round 2
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 300),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                      backgroundColor: Colors.white.withOpacity(0.8),
                     ),
-                  ),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ScoreInputScreen(
-                        round: 2,
-                        playerId: playerId,
-                        playerName: playerName,
-                        courseId: courseId,
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ScoreInputScreen(
+                          round: 2,
+                          playerId: playerId,
+                          playerName: playerName,
+                          courseId: courseId,
+                        ),
                       ),
                     ),
-                  ),
-                  child: const Text(
-                    '2. Add Round 2 Scores',
-                    style: TextStyle(fontSize: 16),
+                    child: const Text(
+                      '2. Add Round 2 Scores',
+                      style: TextStyle(fontSize: 16),
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Round 3
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 300),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
+              // Round 3
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 300),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                      backgroundColor: Colors.white.withOpacity(0.8),
                     ),
-                  ),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ScoreInputScreen(
-                        round: 3,
-                        playerId: playerId,
-                        playerName: playerName,
-                        courseId: courseId,
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ScoreInputScreen(
+                          round: 3,
+                          playerId: playerId,
+                          playerName: playerName,
+                          courseId: courseId,
+                        ),
                       ),
                     ),
-                  ),
-                  child: const Text(
-                    '3. Add Round 3 Scores',
-                    style: TextStyle(fontSize: 16),
+                    child: const Text(
+                      '3. Add Round 3 Scores',
+                      style: TextStyle(fontSize: 16),
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Leaderboard
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 300),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
+              // Leaderboard
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 300),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                      backgroundColor: Colors.white.withOpacity(0.8),
                     ),
-                  ),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => LeaderboardScreen(courseId: courseId),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => LeaderboardScreen(courseId: courseId),
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    '4. View Leaderboard',
-                    style: TextStyle(fontSize: 16),
+                    child: const Text(
+                      '4. View Leaderboard',
+                      style: TextStyle(fontSize: 16),
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Stats
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 300),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
+              // Stats
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 300),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                      backgroundColor: Colors.white.withOpacity(0.8),
                     ),
-                  ),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => StatsScreen(courseId: courseId),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => StatsScreen(courseId: courseId),
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    '5. View Stats',
-                    style: TextStyle(fontSize: 16),
+                    child: const Text(
+                      '5. View Stats',
+                      style: TextStyle(fontSize: 16),
+                    ),
                   ),
                 ),
               ),
-            ),
-            const Spacer(),
+              const Spacer(),
 
-            // Logout button
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 300),
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
+              // Logout button
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 300),
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
                     ),
+                    icon: const Icon(Icons.logout, color: Colors.white),
+                    label: const Text(
+                      "Logout",
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                    onPressed: () => _logout(context),
                   ),
-                  icon: const Icon(Icons.logout, color: Colors.white),
-                  label: const Text(
-                    "Logout",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
-                  onPressed: () => _logout(context),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
